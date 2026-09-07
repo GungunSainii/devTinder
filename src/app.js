@@ -7,18 +7,35 @@ const app = express(); //instance of express js application //new appn of expres
 
 //Server is known as request handler
 
-// app.use((req,res)=>{
-//     res.send("Hello from the server");
-// });
+// app.use("/user",(req,res)=>{
+//     res.send("HAHAHHAH");
+// })
+
+app.patch("/user",(req,res)=>{
+    res.send("Data patched successfully");
+});
+
+app.get("/user",(req,res)=>{
+    res.send({
+        firstName: "Gungun",
+        lastName: "Saini"
+    });
+});
+
+app.post("/user",(req,res)=>{
+    console.log("Save Data to the database");
+    res.send("Data Successfully saved to database");
+});
+
+app.delete("/user",(req,res)=>{
+    res.send("Deleted");
+});
+
 app.use("/test",(req,res)=>{
-    res.send("Test Test Test");
+    res.send("Testing girly pop (❁´◡`❁)");
 });
-app.use("/helo",(req,res)=>{
-    res.send("HULLA HULLA HU HU");
-});
-app.use("/",(req,res)=>{
-    res.send("HI CUTIE PIE OwO");
-});
+
+
 
 
 
