@@ -4,18 +4,24 @@ const User = require("./models/user");
 const app = express(); //instance of express js application //new appn of express
 //creating new web server using express
 
-
+//Middleware
+app.use(express.json());
 
 app.post("/signup",async (req,res)=>{
-    const obj = {
-        firstName: "Naruto",
-        lastName: "Uzumaki",
-        email: "datebayo.com",
-        password: "hinata01"
-    }
+
+    // console.log(req.body);
+
+
+    // const obj = {
+    //     firstName: "Naruto",
+    //     lastName: "Uzumaki",
+    //     email: "datebayo.com",
+    //     password: "hinata01"
+    // }
 
     try{
-        const user = new User(obj);
+        //creating a new instance of user model
+        const user = new User(req.body);
 
     await user.save();
 
