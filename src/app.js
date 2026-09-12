@@ -27,9 +27,9 @@ app.post("/signup",async (req,res)=>{
 
     res.send("User added successfully");
 
-    }catch{(err)=>{
+    }catch (err) {
         res.status(400).send("Error" + err.message);
-    }}
+    }
 
     
 })
@@ -74,7 +74,7 @@ app.delete("/user",async (req,res)=>{
     }
 })
 
-//
+// 
 app.patch("/hw",async (req,res)=>{
     const lastNamee = req.body.lastName;
     const data = req.body;
@@ -88,30 +88,53 @@ app.patch("/hw",async (req,res)=>{
 
 
 //Api to update 
-app.patch("/user",async (req,res)=>{
+app.patch("/user/:userId",async (req,res)=>{
 
-    const userId = req.body.userId;
+    const userId = req.params?.userId;
     const data = req.body;
+
+    
 
     try{
         const user = await User.findByIdAndUpdate({_id:userId}, data,{
-            returnDocument: "before"
+            returnDocument: "before",
+            runValidators: true,
         });
         console.log(user);
+
+        const ALLOWED_UPDATES = [
+        "lastName","age","gender","password"
+    ]
+
+        const isUpdateAllowed = Object.keys(data).every((k)=>{
+        ALLOWED_UPDATES.includes(k);
+        });
+
+        if (!isUpdateAllowed) {
+        throw new Error("Update not allowed");
+        }
+
+        if(data?.lastName.length > 20 ){
+            throw new Error("Update not allowed");
+        }
+
         res.send("User updated successfully");
-    } catch (err){
-        res.status(400).send("Something went wrong");
-    }
+        } catch (err){
+        res.status(400).send(err.message);
+        }
 })
 
 
-connectDB().then(()=>{
+connectDB().then(async ()=>{
+    await User.createIndexes();
     console.log("Databse is established");
+
     app.listen(3000,()=>{
     console.log("Server is successfully listening on port 3000");
 });
 }).catch((err)=>{
     console.log("DB not connected");
+    console.log(err);
 })
 
 
