@@ -3,12 +3,15 @@ const {connectDB}= require("./config/database");
 const User = require("./models/user");
 const app = express(); //instance of express js application //new appn of express
 //creating new web server using express
+const { validateSignUpData } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 //Middleware
 app.use(express.json());
 
 app.post("/signup",async (req,res)=>{
 
+    
     // console.log(req.body);
 
 
@@ -20,18 +23,68 @@ app.post("/signup",async (req,res)=>{
     // }
 
     try{
+        //Validate the data 
+        validateSignUpData(req);
+
+        //Encrypt the password 
+        const {firstName, lastName, emailId, password} = req.body;
+
+        const passwordHash = await bcrypt.hash(password, 10);
+        console.log(passwordHash);
+
+
+
+
+
+
         //creating a new instance of user model
-        const user = new User(req.body);
+        const user = new User({
+            firstName, 
+            lastName, 
+            emailId, 
+            password: passwordHash,
+        });
 
-    await user.save();
+        await user.save();
 
-    res.send("User added successfully");
+        res.send("User added successfully");
 
-    }catch (err) {
-        res.status(400).send("Error" + err.message);
+    }   catch (err) {
+        res.status(400).send("Error " + err.message);
     }
 
     
+})
+
+
+app.post("/login", async (req,res)=>{
+    try {
+        const {emailId, password} = req.body;
+
+        console.log(emailId);
+        console.log(password);
+
+
+        const user = await User.findOne({emailId: emailId});
+
+        console.log(user);
+
+        if(!user){
+            throw new Error("EmailId is not present in DB");
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        console.log(isPasswordValid);
+
+        if(isPasswordValid){
+            res.send("Login Successful!!!")
+        } else {
+            throw new Error("Pass word is not correct !!")
+        }
+
+    } catch (err) {
+        res.status(400).send("ERROR : "+ err.message);
+    }
 })
 
 //GET user by lastname
