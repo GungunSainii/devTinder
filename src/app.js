@@ -5,9 +5,15 @@ const app = express(); //instance of express js application //new appn of expres
 //creating new web server using express
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const {userAuth} = require("./middlewares/auth");
+
 
 //Middleware
 app.use(express.json());
+app.use(cookieParser());
+
 
 app.post("/signup",async (req,res)=>{
 
@@ -72,12 +78,21 @@ app.post("/login", async (req,res)=>{
         if(!user){
             throw new Error("EmailId is not present in DB");
         }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await user.validatePassword(password);
 
         console.log(isPasswordValid);
 
         if(isPasswordValid){
+
+            //Create a JWT Token
+            const token = await user.getJWT();
+
+            //Add the token to cookie and send the response back to the user
+            res.cookie("token",token, {
+                expires: new Date(Date.now() + 8*3600000),
+            });
             res.send("Login Successful!!!")
+
         } else {
             throw new Error("Pass word is not correct !!")
         }
@@ -87,100 +102,33 @@ app.post("/login", async (req,res)=>{
     }
 })
 
-//GET user by lastname
-app.get("/user",async (req,res)=>{
-    const lastName = req.body.lastName;
+
+//Profile api 
+app.get("/profile", userAuth , async (req,res)=>{
 
     try {
-        const user = await User.find({ lastName: lastName});
-        if(user.length === 0) {
-            res.status(404).send("User not found");
-        } else {
-            res.send(user);
-        }
+    
+    const user = req.user;
+    res.send(user)
     } catch (err) {
-        res.status(400).send("Something went wrong");
+        res.status(400).send("Error :" + err.message);
     }
-})
-
-//Feed API - GET /feed - get all the users from the database
-app.get("/feed",async (req,res)=>{
-    try{
-        const users = await User.find({});
-        res.send(users);
-    } catch (err) {
-        res.status(400).send("Something went wrong");
-    }
-
-})
-
-//Delete aPi
-app.delete("/user",async (req,res)=>{
-    const userId = req.body.userId;
-    try{
-        // const user = await User.findByIdAndDelete({_id:userId});
-        const user = await User.findByIdAndDelete(userId);
-        res.send("User deleted successfullly");
-
-    } catch (err){
-        res.status(400).send("Something went wrong");
-    }
-})
-
-// 
-app.patch("/hw",async (req,res)=>{
-    const lastNamee = req.body.lastName;
-    const data = req.body;
-    try {
-        await User.findOneAndUpdate({lastName: lastNamee},data);
-        res.send("user patched ");
-    } catch (err) {
-        res.status(400).send("SMTHG FISHY");
-    }
-})
-
-
-//Api to update 
-app.patch("/user/:userId",async (req,res)=>{
-
-    const userId = req.params?.userId;
-    const data = req.body;
-
     
 
-    try{
-        const user = await User.findByIdAndUpdate({_id:userId}, data,{
-            returnDocument: "before",
-            runValidators: true,
-        });
-        console.log(user);
+})
 
-        const ALLOWED_UPDATES = [
-        "lastName","age","gender","password"
-    ]
 
-        const isUpdateAllowed = Object.keys(data).every((k)=>{
-        ALLOWED_UPDATES.includes(k);
-        });
+app.post("/sendConnectionRequest", userAuth , (req,res)=>{
+    const user = req.user;
+    console.log("Sending connection request");
 
-        if (!isUpdateAllowed) {
-        throw new Error("Update not allowed");
-        }
-
-        if(data?.lastName.length > 20 ){
-            throw new Error("Update not allowed");
-        }
-
-        res.send("User updated successfully");
-        } catch (err){
-        res.status(400).send(err.message);
-        }
+    res.send(user.firstName + "   sent the connect request");
 })
 
 
 connectDB().then(async ()=>{
     await User.createIndexes();
-    console.log("Databse is established");
+    console.log("Database is established");
 
     app.listen(3000,()=>{
     console.log("Server is successfully listening on port 3000");
