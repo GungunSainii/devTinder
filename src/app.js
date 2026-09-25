@@ -4,11 +4,16 @@ const app = express(); //instance of express js application //new appn of expres
 //creating new web server using express
 const cookieParser = require("cookie-parser");
 const User = require("./models/user");
+const cors = require("cors");
 
 
 
 
 //Middleware
+app.use(cors({
+    origin: "http://localhost:5173/login", //frontend application hosting url
+    credentials: true, //True for cookies setup for that whitelisted url
+}));
 app.use(express.json());
 app.use(cookieParser());
 
