@@ -11,7 +11,8 @@ const cors = require("cors");
 
 //Middleware
 app.use(cors({
-    origin: "http://localhost:5173/login", //frontend application hosting url
+    origin: "http://localhost:5173",//frontend application hosting url
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true, //True for cookies setup for that whitelisted url
 }));
 app.use(express.json());
